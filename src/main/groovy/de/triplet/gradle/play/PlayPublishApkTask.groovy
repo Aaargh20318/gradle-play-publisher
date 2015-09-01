@@ -41,7 +41,7 @@ class PlayPublishApkTask extends PlayPublishTask {
             // from all tracks that have a lower precedence so there is no implicit hiding and we can upload a newer version
             // this is based on the assumption that the newer build is later version of the application anyway and allows
             // better integration with tooling to manage releases.
-            
+
 
             int targetTrackWeight = trackWeight(extension.getTrack());
 

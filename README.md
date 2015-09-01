@@ -57,10 +57,20 @@ Once you have applied this plugin to your android application project you can co
 
 Drop in your service account email address and the p12 key file you generated in the API Console here.
 
+### Version codes
+When ```autoIncrementVersionCode``` is enabled, this plugin will query the Play API to determine the last used versionCode and increments it by 1 before publishing. The changes are not written to the build file.
+When ```autoRemoveLowerPrecedenceVersions``` is enabled, versions that would be implicitly hidden are unpublished. For example releasing v2 on the 'beta' track would hide a 'v1' on the alpha track, resulting in an error from the Play API. Enabling this option unpublishes the older builds from the tracks that would be implicitly hidden. 
+
 ```groovy
 play {
     serviceAccountEmail = 'your-service-account-email'
     pk12File = file('key.p12')
+    autoIncrementVersionCode = false;
+    autoRemoveLowerPrecedenceVersions = false;
+    variantName { 
+        autoIncrementVersionCode = false;
+        autoRemoveLowerPrecedenceVersions = false;
+    }
 }
 ```
 
