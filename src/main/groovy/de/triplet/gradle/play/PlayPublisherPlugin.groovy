@@ -18,7 +18,8 @@ class PlayPublisherPlugin implements Plugin<Project> {
             throw new IllegalStateException("The 'com.android.application' plugin is required.")
         }
 
-        def extension = project.extensions.create('play', PlayPublisherPluginExtension)
+        def variants = project.container(PlayPublishedVariantExtension)
+        def extension = project.extensions.create('play', PlayPublisherPluginExtension,variants)
 
         project.android.applicationVariants.all { variant ->
             if (variant.buildType.isDebuggable()) {
@@ -42,6 +43,8 @@ class PlayPublisherPlugin implements Plugin<Project> {
             def publishApkTaskName = "publishApk${variationName}"
             def publishListingTaskName = "publishListing${variationName}"
             def publishTaskName = "publish${variationName}"
+            def updateVersionCodeTaskName = "update${variationName}VersionCode"
+
 
             def outputData = variant.outputs.first()
             def zipAlignTask = outputData.zipAlign
@@ -88,6 +91,7 @@ class PlayPublisherPlugin implements Plugin<Project> {
             publishApkTask.inputFolder = playResourcesTask.outputFolder
             publishApkTask.description = "Uploads the APK for the ${variationName} build"
             publishApkTask.group = PLAY_STORE_GROUP
+            publishApkTask.variationName=variationName
 
             // Create and configure publisher meta task for this variant
             def publishListingTask = project.tasks.create(publishListingTaskName, PlayPublishListingTask)
@@ -101,12 +105,20 @@ class PlayPublisherPlugin implements Plugin<Project> {
             publishTask.description = "Updates APK and play store listing for the ${variationName} build"
             publishTask.group = PLAY_STORE_GROUP
 
+            def updateVersionTask = project.tasks.create(updateVersionCodeTaskName, PlayPublishUpdateVersionCode)
+            updateVersionTask.extension = extension
+            updateVersionTask.variant = variant
+            updateVersionTask.description = "Builds the ${variationName} build with a versionCode 1 higher than the latest published on Google Play"
+            updateVersionTask.variationName = variationName;
+
             // Attach tasks to task graph.
             publishTask.dependsOn publishApkTask
             publishTask.dependsOn publishListingTask
             publishListingTask.dependsOn playResourcesTask
             publishApkTask.dependsOn playResourcesTask
             publishApkTask.dependsOn assembleTask
+            project.tasks.preBuild.dependsOn updateVersionTask
+
         }
     }
 

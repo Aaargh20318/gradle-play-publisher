@@ -1,6 +1,10 @@
 package de.triplet.gradle.play
 
+import org.gradle.api.NamedDomainObjectContainer
+
 class PlayPublisherPluginExtension {
+
+
 
     String serviceAccountEmail
 
@@ -10,7 +14,24 @@ class PlayPublisherPluginExtension {
 
     boolean errorOnSizeLimit = true
 
+    boolean autoIncrementVersionCode = false
+
+    boolean autoRemoveLowerPrecedenceVersions = false
+
     private String track = 'alpha'
+
+    NamedDomainObjectContainer<PlayPublisherPluginExtension> variants;
+
+
+    def PlayPublisherPluginExtension(variants) {
+        this.variants=variants;
+    }
+
+
+    def variants(Closure closure) {
+        variants.configure(closure)
+    }
+
 
     void setTrack(String track) {
         if (!(track in ['alpha', 'beta', 'rollout', 'production'])) {
@@ -25,5 +46,6 @@ class PlayPublisherPluginExtension {
     }
 
     Double userFraction = 0.1
+
 
 }
