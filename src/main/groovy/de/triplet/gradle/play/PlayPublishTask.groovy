@@ -9,7 +9,8 @@ import org.gradle.api.DefaultTask
 class PlayPublishTask extends DefaultTask {
 
     // region '419' is a special case in the play store that represents latin america
-    def matcher = ~"^[a-z]{2}(-([A-Z]{2}|419))?\\z"
+    // 'fil' is a special case in the play store that represents Filipino
+    def matcher = ~"^(fil|[a-z]{2}(-([A-Z]{2}|419))?)\\z"
 
     PlayPublisherPluginExtension extension
 
@@ -23,7 +24,7 @@ class PlayPublishTask extends DefaultTask {
 
     def publish() {
         if (service == null) {
-            service = AndroidPublisherHelper.init(extension.serviceAccountEmail, extension.pk12File)
+            service = AndroidPublisherHelper.init(extension)
         }
 
         edits = service.edits()

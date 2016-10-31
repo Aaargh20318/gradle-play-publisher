@@ -7,7 +7,8 @@ class TaskHelper {
 
     def static readAndTrimFile(File file, int maxCharLength, boolean errorOnSizeLimit) {
         if (file.exists()) {
-            def message = file.text
+            def message = normalize(file.text)
+
             if (message.length() > maxCharLength) {
                 if (errorOnSizeLimit) {
                     throw new LimitExceededException(file, maxCharLength)
@@ -15,10 +16,15 @@ class TaskHelper {
 
                 return message.substring(0, maxCharLength)
             }
+
             return message
         }
 
         return ""
+    }
+
+    def static normalize(String text) {
+        return text.replaceAll("\\r\\n", "\n")
     }
 
     def static List<AbstractInputStreamContent> getImageListAsStream(File listingDir, String graphicPath) {

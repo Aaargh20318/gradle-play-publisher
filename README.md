@@ -4,7 +4,22 @@ Gradle plugin to upload your APK and app details to the Google Play Store. Needs
 
 [![Build Status](https://travis-ci.org/Triple-T/gradle-play-publisher.svg?branch=master)](https://travis-ci.org/Triple-T/gradle-play-publisher)
 
+## Quick Start Guide
+
+1. Upload the first version of your APK using the web interface.
+1. Create a Google Play Service Account (see [Prerequisites](#google-play-service-account)).
+1. Assign a valid `signingConfig` to your release build type.
+1. Add the plugin to your buildscript dependencies (see [Usage](#usage)).
+1. Apply the plugin (see [Usage](#usage)).
+1. Apply your credentials inside the `play` block (see [Credentials](#credentials)).
+
 ## Prerequisites
+
+### Initial Play Store Upload
+
+The first APK of your App needs to be uploaded via the web interface. This is to register the application id and cannot be done using the Play Developer API. For all subsequent uploads and changes this plugin can be used.
+
+### Google Play Service Account
 
 To use the publisher plugin you have to create a service account for your existing Google Play Account. See https://developers.google.com/android-publisher/getting_started for more information.
 
@@ -13,6 +28,10 @@ Due to the way the Google Play Publisher API works, you have to grant at least t
 ![permissions.png](https://cloud.githubusercontent.com/assets/1361086/5045988/95eb902e-6bb9-11e4-9251-30840ba014d3.png)
 
 Once you finished the setup you have a so called *service account email address* and a *p12 key file* that we will use later on.
+
+### Signing Configuration
+
+Please make sure to assign a valid signing configuration to your release build type. Otherwise, there won't be a publishable (signed) APK. In that case, the plugin won't create any of its tasks.
 
 ## Usage
 
@@ -27,7 +46,7 @@ buildscript {
 
     dependencies {
     	// ...
-        classpath 'com.github.triplet.gradle:play-publisher:1.1.2'
+        classpath 'com.github.triplet.gradle:play-publisher:1.1.5'
     }
 }
 ```
@@ -71,6 +90,14 @@ play {
         autoIncrementVersionCode = false;
         autoRemoveLowerPrecedenceVersions = false;
     }
+}
+```
+
+or drop in the JSON file you generated in the API Console.
+
+```groovy
+play {
+    jsonFile = file('keys.json')
 }
 ```
 
@@ -131,7 +158,7 @@ To make sure your texts comply to the requirements of the Play Store, there is a
 
 The limits are:
 
-* Title: *90 characters*
+* Title: *30 characters*
 * Short description: *80 characters*
 * Long description: *4000 characters*
 * Recent changes : *500 characters*
@@ -153,7 +180,7 @@ As a default your APK is published to the alpha track and you can promote it to 
 play {
     // ...
     track = 'production' // or 'rollout' or 'beta' or 'alpha'
-    userFraction = 0.2 // only necessary for 'rollout', in this case default is 0.1
+    userFraction = 0.2 // only necessary for 'rollout', in this case default is 0.1 (10% of the target)
 }
 ```
 
@@ -200,11 +227,13 @@ In that case the plugin looks for the Play Store images in your `play` folder. S
                   + - [tvBanner]
                   |
                   + - [tvScreenshots]
+                  |
+                  + - [wearScreenshots]
 ```
 
 Note: The plugin does not enforce the correct size and file type. If you try to upload invalid files, the Google API will fail with a detailed error message.
 
-Note: We still have some issues when you change the images in those folders. For now you should do a full rebuild whenever you change them.
+Note: The plugin copies and merges the contents of the different play folders into a build folder for upload. If there are still images left from a previous build, this might lead to undesired behaviour. Please make sure to always do a `./gradlew clean` whenever you rename or delete images in those directories.
 
 ## Advanced Topics
 

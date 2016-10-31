@@ -12,19 +12,43 @@ public class TestHelper {
         project.apply plugin: 'com.android.application'
         project.apply plugin: 'com.github.triplet.play'
         project.android {
-            compileSdkVersion 22
-            buildToolsVersion '22.0.1'
+            compileSdkVersion 23
+            buildToolsVersion '23.0.1'
 
             defaultConfig {
                 versionCode 1
                 versionName '1.0'
-                minSdkVersion 22
-                targetSdkVersion 22
+                minSdkVersion 23
+                targetSdkVersion 23
             }
 
             buildTypes {
                 release {
                     signingConfig signingConfigs.debug
+                }
+            }
+        }
+
+        return project
+    }
+
+    public static Project noSigningConfigProject() {
+        Project project = ProjectBuilder.builder().withProjectDir(FIXTURE_WORKING_DIR).build()
+        project.apply plugin: 'com.android.application'
+        project.apply plugin: 'com.github.triplet.play'
+        project.android {
+            compileSdkVersion 23
+            buildToolsVersion '23.0.1'
+
+            defaultConfig {
+                versionCode 1
+                versionName '1.0'
+                minSdkVersion 23
+                targetSdkVersion 23
+            }
+
+            buildTypes {
+                release {
                 }
             }
         }

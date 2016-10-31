@@ -46,16 +46,6 @@ class PlayPublisherPlugin implements Plugin<Project> {
             def updateVersionCodeTaskName = "update${variationName}VersionCode"
 
 
-            def outputData = variant.outputs.first()
-            def zipAlignTask = outputData.zipAlign
-            def assembleTask = outputData.assemble
-
-            def variantData = variant.variantData
-            if (!zipAlignTask || !variantData.zipAlignEnabled) {
-                log.warn("Could not find ZipAlign task. Did you specify a signingConfig for the variation ${variationName}?")
-                return
-            }
-
             // Create and configure bootstrap task for this variant.
             def bootstrapTask = project.tasks.create(bootstrapTaskName, BootstrapTask)
             bootstrapTask.extension = extension
@@ -63,7 +53,7 @@ class PlayPublisherPlugin implements Plugin<Project> {
             if (StringUtils.isNotEmpty(flavor)) {
                 bootstrapTask.outputFolder = new File(project.projectDir, "src/${flavor}/play")
             } else {
-                bootstrapTask.outputFolder = new File(project.projectDir, "src/${variant.buildType.name}/play")
+                bootstrapTask.outputFolder = new File(project.projectDir, "src/main/play")
             }
             bootstrapTask.description = "Downloads the play store listing for the ${variationName} build. No download of image resources. See #18."
             bootstrapTask.group = PLAY_STORE_GROUP
@@ -84,15 +74,6 @@ class PlayPublisherPlugin implements Plugin<Project> {
             playResourcesTask.description = "Collects play store resources for the ${variationName} build"
             playResourcesTask.group = PLAY_STORE_GROUP
 
-            // Create and configure publisher apk task for this variant.
-            def publishApkTask = project.tasks.create(publishApkTaskName, PlayPublishApkTask)
-            publishApkTask.extension = extension
-            publishApkTask.variant = variant
-            publishApkTask.inputFolder = playResourcesTask.outputFolder
-            publishApkTask.description = "Uploads the APK for the ${variationName} build"
-            publishApkTask.group = PLAY_STORE_GROUP
-            publishApkTask.variationName=variationName
-
             // Create and configure publisher meta task for this variant
             def publishListingTask = project.tasks.create(publishListingTaskName, PlayPublishListingTask)
             publishListingTask.extension = extension
@@ -101,24 +82,38 @@ class PlayPublisherPlugin implements Plugin<Project> {
             publishListingTask.description = "Updates the play store listing for the ${variationName} build"
             publishListingTask.group = PLAY_STORE_GROUP
 
-            def publishTask = project.tasks.create(publishTaskName)
-            publishTask.description = "Updates APK and play store listing for the ${variationName} build"
-            publishTask.group = PLAY_STORE_GROUP
-
-            def updateVersionTask = project.tasks.create(updateVersionCodeTaskName, PlayPublishUpdateVersionCode)
-            updateVersionTask.extension = extension
-            updateVersionTask.variant = variant
-            updateVersionTask.description = "Builds the ${variationName} build with a versionCode 1 higher than the latest published on Google Play"
-            updateVersionTask.variationName = variationName;
-
             // Attach tasks to task graph.
-            publishTask.dependsOn publishApkTask
-            publishTask.dependsOn publishListingTask
             publishListingTask.dependsOn playResourcesTask
-            publishApkTask.dependsOn playResourcesTask
-            publishApkTask.dependsOn assembleTask
-            project.tasks.preBuild.dependsOn updateVersionTask
 
+            if (variant.isSigningReady()) {
+                // Create and configure publisher apk task for this variant.
+                def publishApkTask = project.tasks.create(publishApkTaskName, PlayPublishApkTask)
+                publishApkTask.extension = extension
+                publishApkTask.variant = variant
+                publishApkTask.inputFolder = playResourcesTask.outputFolder
+                publishApkTask.description = "Uploads the APK for the ${variationName} build"
+                publishApkTask.group = PLAY_STORE_GROUP
+                publishApkTask.variationName=variationName
+
+                def publishTask = project.tasks.create(publishTaskName)
+                publishTask.description = "Updates APK and play store listing for the ${variationName} build"
+                publishTask.group = PLAY_STORE_GROUP
+                
+                def updateVersionTask = project.tasks.create(updateVersionCodeTaskName, PlayPublishUpdateVersionCode)
+                updateVersionTask.extension = extension
+                updateVersionTask.variant = variant
+                updateVersionTask.description = "Builds the ${variationName} build with a versionCode 1 higher than the latest published on Google Play"
+                updateVersionTask.variationName = variationName;
+
+                // Attach tasks to task graph.
+                publishTask.dependsOn publishApkTask
+                publishTask.dependsOn publishListingTask
+                publishApkTask.dependsOn playResourcesTask
+                publishApkTask.dependsOn project.tasks."assemble${variationName}"
+                project.tasks.preBuild.dependsOn updateVersionTask
+            } else {
+                log.warn("Signing not ready. Did you specify a signingConfig for the variation ${variationName}?")
+            }
         }
     }
 
